@@ -1,0 +1,1198 @@
+/* Hotel Booking Frontend - CSS Variables for branding */
+:root {
+    --hb-primary: #2563eb;
+    --hb-primary-hover: #1d4ed8;
+    --hb-primary-light: #dbeafe;
+    --hb-secondary: #64748b;
+    --hb-secondary-hover: #475569;
+    --hb-success: #16a34a;
+    --hb-danger: #dc2626;
+    --hb-warning: #f59e0b;
+    --hb-text: #1e293b;
+    --hb-text-light: #64748b;
+    --hb-bg: #ffffff;
+    --hb-bg-alt: #f8fafc;
+    --hb-border: #e2e8f0;
+    --hb-radius: 12px;
+    --hb-radius-sm: 8px;
+    --hb-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+    --hb-popup-width: 640px;
+    --hb-overlay-bg: rgba(0, 0, 0, 0.5);
+    --hb-font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    --hb-font-heading: 1.25rem;
+    --hb-font-body: 0.9375rem;
+    --hb-font-small: 0.8125rem;
+    --hb-btn-text: #ffffff;
+}
+
+/* Book Now Button */
+.hb-book-now-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 12px 28px;
+    background: var(--hb-primary);
+    color: var(--hb-btn-text);
+    border: none;
+    border-radius: var(--hb-radius-sm);
+    font-family: var(--hb-font-family);
+    font-size: var(--hb-font-body);
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.2s, transform 0.1s;
+    line-height: 1.4;
+}
+
+.hb-book-now-btn:hover {
+    background: var(--hb-primary-hover);
+}
+
+.hb-book-now-btn:active {
+    transform: scale(0.98);
+}
+
+/* Overlay */
+.hb-popup-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 999999;
+    background: var(--hb-overlay-bg);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    opacity: 0;
+    transition: opacity 0.25s ease;
+}
+
+.hb-popup-overlay.hb-visible {
+    opacity: 1;
+}
+
+/* Popup Container */
+/* Shell: fixed header, scrolling body, sticky footer -- so the primary action
+   is always reachable without scrolling to the bottom of a long step. */
+.hb-popup {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    max-width: var(--hb-popup-width);
+    max-height: min(90vh, 860px);
+    background: var(--hb-bg);
+    border-radius: var(--hb-radius);
+    box-shadow: var(--hb-shadow);
+    overflow: hidden;
+    transform: translateY(20px);
+    transition: transform 0.3s ease;
+    font-family: var(--hb-font-family);
+    color: var(--hb-text);
+}
+
+/* Steps 3 and 6 use a two-column layout, so they need more room. */
+.hb-popup-overlay.hb-wide .hb-popup {
+    max-width: min(940px, 100%);
+}
+
+.hb-popup-overlay.hb-visible .hb-popup {
+    transform: translateY(0);
+}
+
+.hb-popup-header {
+    flex: 0 0 auto;
+    padding: 16px 20px 0;
+    border-bottom: 1px solid var(--hb-border);
+    background: var(--hb-bg);
+}
+
+.hb-popup-titlebar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+}
+
+.hb-popup-title {
+    margin: 0;
+    font-size: var(--hb-font-heading);
+    font-weight: 700;
+    color: var(--hb-text);
+    line-height: 1.3;
+}
+
+.hb-popup-close {
+    flex: 0 0 auto;
+    width: 34px;
+    height: 34px;
+    background: transparent;
+    border: 1px solid var(--hb-border);
+    border-radius: 50%;
+    font-size: 20px;
+    line-height: 1;
+    cursor: pointer;
+    color: var(--hb-text-light);
+    transition: background 0.2s, color 0.2s;
+}
+
+.hb-popup-close:hover {
+    background: var(--hb-bg-alt);
+    color: var(--hb-text);
+}
+
+/* A field the hotel has switched off must stay hidden even though the layout
+   rules below would otherwise give it a display value. */
+.hb-popup [hidden] {
+    display: none !important;
+}
+
+/* Step Indicator */
+.hb-steps {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 14px 0 12px;
+    gap: 0;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    scrollbar-width: none;
+}
+
+.hb-steps::-webkit-scrollbar { display: none; }
+
+.hb-step {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    min-width: 48px;
+}
+
+.hb-step-number {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: var(--hb-bg-alt);
+    border: 2px solid var(--hb-border);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--hb-text-light);
+    transition: all 0.3s;
+}
+
+.hb-step.active .hb-step-number {
+    background: var(--hb-primary);
+    border-color: var(--hb-primary);
+    color: #fff;
+}
+
+.hb-step.completed .hb-step-number {
+    background: var(--hb-success);
+    border-color: var(--hb-success);
+    color: #fff;
+}
+
+.hb-step-label {
+    font-size: 11px;
+    color: var(--hb-text-light);
+    font-weight: 500;
+    white-space: nowrap;
+}
+
+.hb-step.active .hb-step-label {
+    color: var(--hb-primary);
+    font-weight: 600;
+}
+
+.hb-step-line {
+    flex: 1;
+    height: 2px;
+    background: var(--hb-border);
+    min-width: 16px;
+    margin-bottom: 18px;
+}
+
+/* Panels: the only scrolling region, so the header and footer stay put. */
+.hb-panels {
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    padding: 20px 24px 8px;
+}
+
+.hb-panel {
+    display: none;
+}
+
+.hb-panel.active {
+    display: block;
+    animation: hbFadeIn 0.25s ease;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .hb-panel.active { animation: none; }
+    .hb-popup { transition: none; }
+}
+
+@keyframes hbFadeIn {
+    from { opacity: 0; transform: translateX(8px); }
+    to { opacity: 1; transform: translateX(0); }
+}
+
+.hb-panel h2,
+.hb-panel-title {
+    font-size: var(--hb-font-body);
+    font-weight: 700;
+    letter-spacing: 0.01em;
+    margin: 0 0 12px;
+    color: var(--hb-text);
+}
+
+/* Grouped block of related inputs, separated by space rather than borders. */
+.hb-fieldset {
+    margin-bottom: 22px;
+}
+
+.hb-fieldset:last-of-type {
+    margin-bottom: 0;
+}
+
+.hb-fieldset .hb-panel-title {
+    margin-top: 0;
+}
+
+/* Form Grid */
+.hb-form-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+}
+
+.hb-field {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.hb-field label {
+    font-size: var(--hb-font-small);
+    font-weight: 600;
+    color: var(--hb-text);
+}
+
+.hb-field input[type="date"],
+.hb-field input[type="time"],
+.hb-field input[type="text"],
+.hb-field input[type="email"],
+.hb-field input[type="tel"],
+.hb-field input[type="number"],
+.hb-field textarea,
+.hb-field select {
+    padding: 10px 12px;
+    border: 1px solid var(--hb-border);
+    border-radius: var(--hb-radius-sm);
+    font-size: var(--hb-font-body);
+    font-family: var(--hb-font-family);
+    background: var(--hb-bg);
+    color: var(--hb-text);
+    transition: border-color 0.2s;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.hb-field input:focus,
+.hb-field textarea:focus,
+.hb-field select:focus {
+    outline: none;
+    border-color: var(--hb-primary);
+    box-shadow: 0 0 0 3px var(--hb-primary-light);
+}
+
+.hb-field input.hb-invalid,
+.hb-field textarea.hb-invalid,
+.hb-field select.hb-invalid {
+    border-color: var(--hb-danger);
+}
+
+.hb-field textarea {
+    resize: vertical;
+    min-height: 60px;
+}
+
+.hb-field-full {
+    grid-column: 1 / -1;
+}
+
+/* Number Controls */
+.hb-number-control {
+    display: flex;
+    align-items: center;
+    border: 1px solid var(--hb-border);
+    border-radius: var(--hb-radius-sm);
+    overflow: hidden;
+}
+
+.hb-num-btn {
+    width: 40px;
+    height: 42px;
+    border: none;
+    background: var(--hb-bg-alt);
+    font-size: 18px;
+    cursor: pointer;
+    color: var(--hb-text);
+    transition: background 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.hb-num-btn:hover {
+    background: var(--hb-border);
+}
+
+.hb-number-control input {
+    flex: 1;
+    text-align: center;
+    border: none;
+    border-left: 1px solid var(--hb-border);
+    border-right: 1px solid var(--hb-border);
+    border-radius: 0;
+    font-size: var(--hb-font-body);
+    font-weight: 600;
+    padding: 10px 4px;
+    -moz-appearance: textfield;
+    box-shadow: none !important;
+}
+
+.hb-number-control input::-webkit-inner-spin-button,
+.hb-number-control input::-webkit-outer-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}
+
+/* Error Messages */
+.hb-error {
+    color: var(--hb-danger);
+    font-size: var(--hb-font-small);
+    padding: 8px 12px;
+    background: #fef2f2;
+    border-radius: var(--hb-radius-sm);
+    margin-top: 12px;
+    display: none;
+}
+
+.hb-error.hb-show {
+    display: block;
+}
+
+/* Footer: pinned to the bottom of the popup, so Continue/Pay is always in
+   reach regardless of how long the step's content is. Only the active panel's
+   footer is shown, so there is never more than one primary action visible. */
+.hb-panel-footer {
+    position: sticky;
+    bottom: 0;
+    z-index: 5;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin: 20px -24px 0;
+    padding: 14px 24px;
+    border-top: 1px solid var(--hb-border);
+    background: var(--hb-bg);
+}
+
+/* A lone primary action sits on the right, matching the Back/Continue pairing. */
+.hb-panel-footer > .hb-btn-primary:only-child {
+    margin-left: auto;
+}
+
+/* Running total beside the primary action. */
+.hb-footer-total {
+    display: flex;
+    flex-direction: column;
+    line-height: 1.25;
+    margin-right: auto;
+}
+
+.hb-footer-total-label {
+    font-size: var(--hb-font-small);
+    color: var(--hb-text-light);
+}
+
+.hb-footer-total-value {
+    font-size: var(--hb-font-body);
+    font-weight: 700;
+    color: var(--hb-text);
+}
+
+.hb-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 11px 24px;
+    border: none;
+    border-radius: var(--hb-radius-sm);
+    font-size: var(--hb-font-body);
+    font-weight: 600;
+    font-family: var(--hb-font-family);
+    cursor: pointer;
+    transition: background 0.2s, opacity 0.2s;
+    line-height: 1.4;
+}
+
+.hb-btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+.hb-btn-primary {
+    background: var(--hb-primary);
+    color: var(--hb-btn-text);
+    margin-left: auto;
+}
+
+.hb-btn-primary:hover:not(:disabled) {
+    background: var(--hb-primary-hover);
+}
+
+.hb-btn-secondary {
+    background: transparent;
+    color: var(--hb-text-light);
+    border: 1px solid var(--hb-border);
+}
+
+.hb-btn-secondary:hover:not(:disabled) {
+    background: var(--hb-bg-alt);
+    color: var(--hb-text);
+}
+
+/* Spinner */
+.hb-spinner {
+    width: 16px;
+    height: 16px;
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    border-top-color: #fff;
+    border-radius: 50%;
+    animation: hbSpin 0.6s linear infinite;
+}
+
+@keyframes hbSpin {
+    to { transform: rotate(360deg); }
+}
+
+/* Loading */
+.hb-loading {
+    text-align: center;
+    color: var(--hb-text-light);
+    padding: 32px;
+    font-size: var(--hb-font-body);
+}
+
+/* Room Card */
+.hb-room-card {
+    border: 1px solid var(--hb-border);
+    border-radius: var(--hb-radius-sm);
+    overflow: hidden;
+}
+
+.hb-room-image {
+    width: 100%;
+    height: 200px;
+    background: var(--hb-bg-alt);
+    overflow: hidden;
+}
+
+.hb-room-image img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+}
+
+.hb-room-info {
+    padding: 16px;
+}
+
+.hb-room-info h3 {
+    font-size: 1.1rem;
+    font-weight: 700;
+    margin: 0 0 4px;
+}
+
+.hb-room-categories {
+    font-size: var(--hb-font-small);
+    color: var(--hb-primary);
+    margin-bottom: 8px;
+}
+
+.hb-room-description {
+    font-size: var(--hb-font-small);
+    color: var(--hb-text-light);
+    margin-bottom: 12px;
+    line-height: 1.5;
+    max-height: 60px;
+    overflow: hidden;
+}
+
+.hb-room-details-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+}
+
+.hb-room-detail {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.hb-detail-label {
+    font-size: 11px;
+    color: var(--hb-text-light);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.hb-detail-value {
+    font-size: var(--hb-font-body);
+    font-weight: 600;
+}
+
+.hb-price {
+    color: var(--hb-primary);
+}
+
+/* Amenities */
+.hb-amenities-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-bottom: 16px;
+    min-width: 0;
+}
+
+/* Booking Summary */
+
+/* Confirmation */
+.hb-confirmation {
+    text-align: center;
+    padding: 20px 0;
+}
+
+.hb-confirm-icon {
+    width: 64px;
+    height: 64px;
+    border-radius: 50%;
+    background: var(--hb-success);
+    color: #fff;
+    font-size: 32px;
+    line-height: 64px;
+    margin: 0 auto 16px;
+}
+
+.hb-confirm-number {
+    font-size: 1.1rem;
+    color: var(--hb-text-light);
+}
+
+.hb-confirm-details {
+    text-align: left;
+    padding: 16px;
+    background: var(--hb-bg-alt);
+    border-radius: var(--hb-radius-sm);
+    margin-top: 16px;
+    font-size: var(--hb-font-small);
+    line-height: 1.8;
+}
+
+/* Customer Form */
+.hb-customer-form .hb-form-grid {
+    gap: 14px;
+}
+
+/* Payment Methods */
+
+/* Confirmation: message, transaction reference, email notice */
+.hb-confirm-message {
+    color: var(--hb-text-light);
+    font-size: var(--hb-font-body);
+    margin: 0 0 16px;
+}
+
+.hb-confirm-txn {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    align-items: center;
+    margin: 20px auto 0;
+    padding: 14px 16px;
+    background: var(--hb-bg-alt);
+    border: 1px solid var(--hb-border);
+    border-radius: var(--hb-radius-sm);
+    max-width: 100%;
+}
+
+.hb-confirm-txn-label {
+    font-size: var(--hb-font-small);
+    font-weight: 600;
+    color: var(--hb-text-light);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+}
+
+.hb-confirm-txn-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+    justify-content: center;
+    max-width: 100%;
+}
+
+.hb-confirm-txn-id {
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    font-size: var(--hb-font-small);
+    color: var(--hb-text);
+    background: var(--hb-bg);
+    border: 1px solid var(--hb-border);
+    border-radius: 4px;
+    padding: 5px 8px;
+    word-break: break-all;
+    user-select: all;
+}
+
+.hb-copy-btn {
+    flex: 0 0 auto;
+    padding: 5px 12px;
+    font-size: var(--hb-font-small);
+    font-family: var(--hb-font-family);
+    font-weight: 600;
+    color: var(--hb-primary);
+    background: transparent;
+    border: 1px solid var(--hb-primary);
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background 0.15s, color 0.15s;
+}
+
+.hb-copy-btn:hover {
+    background: var(--hb-primary);
+    color: var(--hb-btn-text);
+}
+
+.hb-copy-btn.hb-copied {
+    background: var(--hb-success);
+    border-color: var(--hb-success);
+    color: #fff;
+}
+
+.hb-confirm-email {
+    margin: 16px 0 0;
+    font-size: var(--hb-font-small);
+    color: var(--hb-text-light);
+}
+
+/* ==========================================================================
+   Redesign layer: split layout, add-on cards, checkout.
+   All colours and typography come from the customizer variables declared at
+   the top of this file, so branding continues to drive the look.
+   ========================================================================== */
+
+/* Two-column content with a sticky summary; collapses to one column below. */
+.hb-split {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 20px;
+}
+
+@media (min-width: 900px) {
+    .hb-split {
+        grid-template-columns: minmax(0, 1fr) 290px;
+        align-items: start;
+    }
+
+    .hb-split-aside {
+        position: sticky;
+        top: 0;
+        min-width: 0;
+    }
+}
+
+.hb-split-main { min-width: 0; }
+
+/* ---- Summary card -------------------------------------------------------- */
+.hb-summary-card {
+    padding: 16px;
+    background: var(--hb-bg-alt);
+    border: 1px solid var(--hb-border);
+    border-radius: var(--hb-radius-sm);
+}
+
+.hb-summary-title {
+    margin: 0 0 10px;
+    font-size: var(--hb-font-small);
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--hb-text-light);
+}
+
+.hb-summary-line {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 5px 0;
+    font-size: var(--hb-font-small);
+    color: var(--hb-text);
+}
+
+.hb-summary-line.hb-summary-total {
+    margin-top: 8px;
+    padding-top: 10px;
+    border-top: 1px solid var(--hb-border);
+    font-size: var(--hb-font-body);
+    font-weight: 700;
+}
+
+.hb-summary-line.hb-summary-now {
+    margin-top: 6px;
+    font-weight: 700;
+    color: var(--hb-primary);
+}
+
+.hb-summary-line.hb-summary-balance {
+    color: var(--hb-text-light);
+}
+
+/* ---- Amenity groups and cards ------------------------------------------- */
+.hb-amenity-group { margin-bottom: 20px; }
+.hb-amenity-group .hb-amenities-list { margin-bottom: 0; }
+.hb-amenity-group:last-child { margin-bottom: 0; }
+
+.hb-amenity-group-title {
+    margin: 0 0 8px;
+    font-size: var(--hb-font-small);
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--hb-text-light);
+}
+
+.hb-amenity-item {
+    padding: 12px 14px;
+    border: 1px solid var(--hb-border);
+    border-radius: var(--hb-radius-sm);
+    background: var(--hb-bg);
+    transition: border-color 0.15s, background 0.15s;
+}
+
+.hb-amenity-item:hover { border-color: var(--hb-primary); }
+
+.hb-amenity-item.hb-selected {
+    border-color: var(--hb-primary);
+    background: var(--hb-primary-light);
+}
+
+/* Included add-ons are informational, so they stay visually quiet. */
+.hb-amenity-item.hb-included {
+    background: var(--hb-bg-alt);
+    border-style: dashed;
+}
+
+.hb-amenity-item.hb-included:hover { border-color: var(--hb-border); }
+
+/* Quantity row appears only once the add-on is chosen. */
+
+/* ---- Terms --------------------------------------------------------------- */
+.hb-terms-content {
+    max-height: 260px;
+    overflow-y: auto;
+    padding: 14px 16px;
+    margin-bottom: 14px;
+    background: var(--hb-bg-alt);
+    border: 1px solid var(--hb-border);
+    border-radius: var(--hb-radius-sm);
+    font-size: var(--hb-font-small);
+    line-height: 1.6;
+}
+
+.hb-terms-content:focus-visible { outline: 2px solid var(--hb-primary); outline-offset: 2px; }
+.hb-terms-content p { margin: 0 0 10px; }
+.hb-terms-content > :last-child { margin-bottom: 0; }
+
+.hb-terms-agree {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    padding: 14px;
+    border: 1px solid var(--hb-border);
+    border-radius: var(--hb-radius-sm);
+    cursor: pointer;
+    font-size: var(--hb-font-body);
+    transition: border-color 0.15s, background 0.15s;
+}
+
+.hb-terms-agree:hover { border-color: var(--hb-primary); }
+.hb-terms-agree input { margin-top: 2px; flex: 0 0 auto; width: 17px; height: 17px; }
+
+/* ---- Payment plans and methods ------------------------------------------ */
+.hb-payment-plans { margin-bottom: 18px; }
+
+.hb-plans-title {
+    margin: 0 0 8px;
+    font-size: var(--hb-font-small);
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--hb-text-light);
+}
+
+.hb-payment-plan,
+.hb-payment-method {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    padding: 13px 14px;
+    margin-bottom: 8px;
+    border: 1px solid var(--hb-border);
+    border-radius: var(--hb-radius-sm);
+    cursor: pointer;
+    transition: border-color 0.15s, background 0.15s;
+}
+
+.hb-payment-plan:hover,
+.hb-payment-method:hover { border-color: var(--hb-primary); }
+
+.hb-payment-plan.hb-selected,
+.hb-payment-method.hb-selected {
+    border-color: var(--hb-primary);
+    background: var(--hb-primary-light);
+}
+
+.hb-payment-plan input,
+.hb-payment-method input { margin-top: 3px; flex: 0 0 auto; }
+
+.hb-plan-info,
+.hb-payment-method-info {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    width: 100%;
+    min-width: 0;
+}
+
+.hb-plan-title,
+.hb-payment-method-info h4 {
+    margin: 0;
+    font-size: var(--hb-font-body);
+    font-weight: 600;
+    color: var(--hb-text);
+}
+
+.hb-plan-amount {
+    font-size: var(--hb-font-body);
+    font-weight: 700;
+    color: var(--hb-primary);
+}
+
+.hb-plan-note,
+.hb-payment-method-info p {
+    margin: 0;
+    font-size: var(--hb-font-small);
+    color: var(--hb-text-light);
+    line-height: 1.45;
+}
+
+/* Dedicated, stable Stripe container. */
+.hb-payment-form:empty { display: none; }
+
+.hb-stripe-element {
+    padding: 13px 14px;
+    margin-top: 4px;
+    border: 1px solid var(--hb-border);
+    border-radius: var(--hb-radius-sm);
+    background: var(--hb-bg);
+}
+
+.hb-stripe-element.StripeElement--focus { border-color: var(--hb-primary); }
+.hb-stripe-element.StripeElement--invalid { border-color: var(--hb-danger); }
+
+/* ---- Confirmation -------------------------------------------------------- */
+.hb-confirm-balance {
+    margin: 16px auto 0;
+    padding: 14px 16px;
+    background: var(--hb-bg-alt);
+    border: 1px solid var(--hb-border);
+    border-radius: var(--hb-radius-sm);
+    text-align: left;
+}
+
+.hb-balance-row {
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 5px 0;
+    font-size: var(--hb-font-small);
+}
+
+.hb-balance-row.hb-balance-paid { color: var(--hb-success); font-weight: 600; }
+.hb-balance-row.hb-balance-due { color: var(--hb-warning); font-weight: 700; }
+
+/* ---- Accessibility ------------------------------------------------------- */
+.hb-popup :focus-visible {
+    outline: 2px solid var(--hb-primary);
+    outline-offset: 2px;
+}
+
+/* ---- Responsive ---------------------------------------------------------- */
+@media (max-width: 640px) {
+    .hb-popup-overlay { padding: 0; align-items: stretch; }
+
+    .hb-popup,
+    .hb-popup-overlay.hb-wide .hb-popup {
+        max-width: 100%;
+        max-height: 100%;
+        height: 100%;
+        border-radius: 0;
+    }
+
+    .hb-popup-header { padding: 12px 16px 0; }
+    .hb-panels { padding: 16px 16px 4px; }
+
+    /* Compact indicator: numbers only, since labels would wrap awkwardly. */
+    .hb-steps { justify-content: flex-start; padding: 10px 0; }
+    .hb-step { min-width: 34px; }
+    .hb-step-label { display: none; }
+    .hb-step-number { width: 28px; height: 28px; font-size: 12px; }
+    .hb-step-line { min-width: 10px; margin-bottom: 0; }
+
+    .hb-panel-footer {
+        margin: 16px -16px 0;
+        padding: 12px 16px calc(12px + env(safe-area-inset-bottom));
+    }
+
+    /* Touch targets stay comfortable. */
+    .hb-num-btn { width: 38px; height: 38px; }
+
+    /* Carried over from the superseded 600px block, which conflicted with the
+       full-screen mobile treatment above and has been removed. */
+    .hb-form-grid { grid-template-columns: 1fr; }
+    .hb-room-details-grid { grid-template-columns: 1fr 1fr; }
+    .hb-panel-footer { flex-wrap: wrap; }
+    .hb-btn { flex: 1; justify-content: center; min-width: 120px; padding: 12px 18px; }
+}
+
+/* Containers whose spacing came from the superseded base rules. */
+.hb-payment-methods { margin-bottom: 16px; }
+
+/* ---- Amenity row: info | unit price | quantity | total ------------------- */
+/* One aligned line on desktop. The .hb-amenity-meta wrapper is display:contents
+   so its children become cells of this grid; on mobile it collapses back into a
+   single flex line beneath the title. */
+.hb-amenity-row {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto auto auto;
+    align-items: center;
+    column-gap: 14px;
+    /* Prices, steppers and totals are a numeric cluster and always read
+       left-to-right, so the sequence stays identical on an RTL site. The
+       amenity's own text is switched back below. */
+    direction: ltr;
+}
+
+[dir="rtl"] .hb-amenity-info,
+[dir="rtl"] .hb-amenity-qty-label {
+    direction: rtl;
+    text-align: right;
+}
+
+.hb-amenity-meta { display: contents; }
+
+.hb-amenity-main {
+    grid-column: 1;
+    order: 0;
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    min-width: 0;
+    cursor: pointer;
+}
+
+.hb-amenity-item.hb-included .hb-amenity-main { cursor: default; }
+
+.hb-amenity-check {
+    flex: 0 0 auto;
+    display: flex;
+    align-items: center;
+    padding-top: 1px;
+}
+
+.hb-amenity-check input { width: 17px; height: 17px; cursor: pointer; }
+
+.hb-amenity-check-static {
+    width: 17px;
+    text-align: center;
+    color: var(--hb-success);
+    font-weight: 700;
+}
+
+.hb-amenity-icon { flex: 0 0 auto; font-size: 17px; line-height: 1.35; }
+
+.hb-amenity-info {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 0;
+}
+
+.hb-amenity-name {
+    font-size: var(--hb-font-body);
+    font-weight: 600;
+    color: var(--hb-text);
+    line-height: 1.35;
+}
+
+.hb-amenity-desc {
+    font-size: var(--hb-font-small);
+    color: var(--hb-text-light);
+    line-height: 1.45;
+}
+
+/* Unit price: the rate, distinct from the calculated total. */
+.hb-amenity-price-tag {
+    grid-column: 2;
+    order: 1;
+    justify-self: end;
+    font-size: var(--hb-font-small);
+    color: var(--hb-text-light);
+    white-space: nowrap;
+}
+
+.hb-amenity-price-tag.hb-free-tag {
+    color: var(--hb-success);
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    font-size: 11px;
+}
+
+/* Always present, even when empty, so columns line up down the list. */
+.hb-amenity-qty {
+    grid-column: 3;
+    order: 2;
+    justify-self: end;
+    display: flex;
+    align-items: center;
+    min-height: 32px;
+}
+
+/* Calculated total: the figure the guest actually pays for this line. */
+.hb-amenity-line-total {
+    grid-column: 4;
+    order: 3;
+    justify-self: end;
+    min-width: 64px;
+    text-align: right;
+    font-size: var(--hb-font-body);
+    font-weight: 700;
+    color: var(--hb-text);
+    white-space: nowrap;
+}
+
+/* ---- Compact stepper ----------------------------------------------------- */
+.hb-number-control-sm {
+    display: inline-flex;
+    align-items: center;
+    height: 32px;
+    border: 1px solid var(--hb-border);
+    border-radius: var(--hb-radius-sm);
+    overflow: hidden;
+    background: var(--hb-bg);
+}
+
+.hb-number-control-sm[hidden] { display: none; }
+
+.hb-number-control-sm .hb-num-btn {
+    width: 30px;
+    height: 30px;
+    border: none;
+    background: transparent;
+    color: var(--hb-text-light);
+    font-size: 15px;
+    line-height: 1;
+    cursor: pointer;
+    transition: background 0.15s, color 0.15s;
+}
+
+.hb-number-control-sm .hb-num-btn:hover {
+    background: var(--hb-bg-alt);
+    color: var(--hb-primary);
+}
+
+.hb-number-control-sm .hb-qty-input {
+    width: 34px;
+    height: 30px;
+    padding: 0;
+    border: none;
+    border-left: 1px solid var(--hb-border);
+    border-right: 1px solid var(--hb-border);
+    border-radius: 0;
+    background: transparent;
+    text-align: center;
+    font-size: var(--hb-font-small);
+    font-weight: 600;
+    font-family: var(--hb-font-family);
+    color: var(--hb-text);
+    -moz-appearance: textfield;
+    appearance: textfield;
+}
+
+.hb-number-control-sm .hb-qty-input:focus {
+    outline: none;
+    box-shadow: none;
+}
+
+/* No browser spinners on the stepper. */
+.hb-number-control-sm .hb-qty-input::-webkit-outer-spin-button,
+.hb-number-control-sm .hb-qty-input::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}
+
+/* ---- Responsive ---------------------------------------------------------- */
+/* Two lines: title on top, then price + quantity + total on one aligned row. */
+@media (max-width: 720px) {
+    .hb-amenity-row {
+        grid-template-columns: minmax(0, 1fr);
+        row-gap: 10px;
+    }
+
+    .hb-amenity-meta {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 10px;
+        /* Line up under the title, clear of the checkbox. */
+        padding-left: 27px;
+    }
+
+    .hb-amenity-main,
+    .hb-amenity-price-tag,
+    .hb-amenity-qty,
+    .hb-amenity-line-total {
+        grid-column: auto;
+        justify-self: auto;
+    }
+
+    .hb-amenity-line-total { min-width: 0; }
+
+    /* Touch-friendly without becoming visually dominant. */
+    .hb-number-control-sm { height: 36px; }
+    .hb-number-control-sm .hb-num-btn { width: 34px; height: 34px; }
+    .hb-number-control-sm .hb-qty-input { height: 34px; width: 36px; }
+}
