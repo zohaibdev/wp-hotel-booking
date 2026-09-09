@@ -53,10 +53,15 @@ final class Activator
             'hb_payments' => [
                 'stripe_enabled'             => false,
                 'stripe_mode'                => 'test',
+                // Existing installs have no stored type and resolve to the same
+                // secret-key behaviour they had before restricted keys existed.
+                'stripe_key_type'            => 'secret_key',
                 'stripe_test_publishable_key' => '',
                 'stripe_test_secret_key'     => '',
                 'stripe_live_publishable_key' => '',
                 'stripe_live_secret_key'     => '',
+                'stripe_test_restricted_key' => '',
+                'stripe_live_restricted_key' => '',
                 'offline_payment_enabled'    => true,
                 'offline_payment_title'      => __('Pay at Hotel', 'hotel-booking'),
                 'offline_payment_description' => __('Pay at the hotel upon arrival.', 'hotel-booking'),

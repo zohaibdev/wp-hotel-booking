@@ -29,6 +29,9 @@ final class SettingsPage
         'form_fields' => 'Form Fields',
     ];
 
+    /** Key-format problems collected during save, surfaced after the redirect. */
+    private array $stripe_key_errors = [];
+
     public function init(): void
     {
         add_action('admin_init', [$this, 'handle_save']);
@@ -88,6 +91,38 @@ final class SettingsPage
                     <p><?php esc_html_e('Please enter a valid email address for the test.', 'hotel-booking'); ?></p>
                 </div>
             <?php endif; ?>
+
+            <?php
+            $stripe_result = isset($_GET['hb-stripe']) ? sanitize_text_field(wp_unslash($_GET['hb-stripe'])) : '';
+            if ($stripe_result !== '') :
+                $msg = get_transient('hb_stripe_test_message');
+                delete_transient('hb_stripe_test_message');
+                ?>
+                <div class="notice notice-<?php echo $stripe_result === 'ok' ? 'success' : 'error'; ?> is-dismissible">
+                    <p>
+                        <strong><?php echo $stripe_result === 'ok'
+                            ? esc_html__('Stripe connection successful.', 'hotel-booking')
+                            : esc_html__('Stripe connection failed.', 'hotel-booking'); ?></strong>
+                        <?php echo $msg ? ' ' . esc_html($msg) : ''; ?>
+                    </p>
+                </div>
+            <?php endif; ?>
+
+            <?php
+            if (isset($_GET['hb-stripe-keys'])) :
+                $key_errors = get_transient('hb_stripe_key_errors');
+                delete_transient('hb_stripe_key_errors');
+                if (!empty($key_errors)) : ?>
+                    <div class="notice notice-error is-dismissible">
+                        <p><strong><?php esc_html_e('Some Stripe keys were not saved.', 'hotel-booking'); ?></strong></p>
+                        <ul style="list-style:disc;margin-left:20px;">
+                            <?php foreach ((array) $key_errors as $e) : ?>
+                                <li><?php echo esc_html($e); ?></li>
+                            <?php endforeach; ?>
+                        </ul>
+                    </div>
+                <?php endif;
+            endif; ?>
 
             <nav class="nav-tab-wrapper hb-settings-tabs">
                 <?php foreach ($tabs as $slug => $label) : ?>
@@ -334,6 +369,7 @@ final class SettingsPage
     private function render_payments_tab(): void
     {
         $payments = get_option('hb_payments', []);
+        $resolver = new \HotelBooking\Services\StripeKeyResolver();
         ?>
         <div class="hb-settings-section">
             <h2><?php esc_html_e('Stripe Settings', 'hotel-booking'); ?></h2>
@@ -362,24 +398,74 @@ final class SettingsPage
                     </td>
                 </tr>
                 <tr>
-                    <th><label for="stripe_test_publishable_key"><?php esc_html_e('Test Publishable Key', 'hotel-booking'); ?></label></th>
-                    <td><input type="text" id="stripe_test_publishable_key" name="hb_payments[stripe_test_publishable_key]"
-                               value="<?php echo esc_attr($payments['stripe_test_publishable_key'] ?? ''); ?>" class="regular-text"></td>
+                    <th><?php esc_html_e('API Key Type', 'hotel-booking'); ?></th>
+                    <td>
+                        <?php $key_type = $resolver->get_key_type(); ?>
+                        <fieldset>
+                            <label style="display:block;margin-bottom:6px;">
+                                <input type="radio" name="hb_payments[stripe_key_type]" value="secret_key"
+                                    <?php checked($key_type, \HotelBooking\Services\StripeKeyResolver::TYPE_SECRET); ?>>
+                                <strong><?php esc_html_e('Secret Key', 'hotel-booking'); ?></strong>
+                                <span class="description"><?php esc_html_e('— full account access (sk_...).', 'hotel-booking'); ?></span>
+                            </label>
+                            <label style="display:block;">
+                                <input type="radio" name="hb_payments[stripe_key_type]" value="restricted_key"
+                                    <?php checked($key_type, \HotelBooking\Services\StripeKeyResolver::TYPE_RESTRICTED); ?>>
+                                <strong><?php esc_html_e('Restricted Key', 'hotel-booking'); ?></strong>
+                                <span class="description"><?php esc_html_e('— limited permissions (rk_...). Recommended: grant read and write on PaymentIntents.', 'hotel-booking'); ?></span>
+                            </label>
+                        </fieldset>
+                        <p class="description">
+                            <?php esc_html_e('Only the selected type is used. The other is stored but ignored, so switching back needs no re-entry.', 'hotel-booking'); ?>
+                        </p>
+                    </td>
                 </tr>
+            </table>
+
+            <?php
+            // Test and Live credentials are kept in separate blocks so the two
+            // are never confused; the active one is highlighted.
+            $this->render_stripe_credentials(
+                \HotelBooking\Services\StripeKeyResolver::MODE_TEST,
+                __('Test API Credentials', 'hotel-booking'),
+                $payments,
+                $resolver
+            );
+
+            $this->render_stripe_credentials(
+                \HotelBooking\Services\StripeKeyResolver::MODE_LIVE,
+                __('Live API Credentials', 'hotel-booking'),
+                $payments,
+                $resolver
+            );
+            ?>
+
+            <p class="description" style="margin-top:12px;">
+                <strong><?php esc_html_e('Never share your Stripe secret or restricted API key with anyone.', 'hotel-booking'); ?></strong>
+                <?php esc_html_e('These keys are used only on your server and are never sent to the browser.', 'hotel-booking'); ?>
+            </p>
+
+            <table class="form-table">
                 <tr>
-                    <th><label for="stripe_test_secret_key"><?php esc_html_e('Test Secret Key', 'hotel-booking'); ?></label></th>
-                    <td><input type="password" id="stripe_test_secret_key" name="hb_payments[stripe_test_secret_key]"
-                               value="<?php echo esc_attr($payments['stripe_test_secret_key'] ?? ''); ?>" class="regular-text"></td>
-                </tr>
-                <tr>
-                    <th><label for="stripe_live_publishable_key"><?php esc_html_e('Live Publishable Key', 'hotel-booking'); ?></label></th>
-                    <td><input type="text" id="stripe_live_publishable_key" name="hb_payments[stripe_live_publishable_key]"
-                               value="<?php echo esc_attr($payments['stripe_live_publishable_key'] ?? ''); ?>" class="regular-text"></td>
-                </tr>
-                <tr>
-                    <th><label for="stripe_live_secret_key"><?php esc_html_e('Live Secret Key', 'hotel-booking'); ?></label></th>
-                    <td><input type="password" id="stripe_live_secret_key" name="hb_payments[stripe_live_secret_key]"
-                               value="<?php echo esc_attr($payments['stripe_live_secret_key'] ?? ''); ?>" class="regular-text"></td>
+                    <th><?php esc_html_e('Connection', 'hotel-booking'); ?></th>
+                    <td>
+                        <?php submit_button(
+                            __('Test Stripe Connection', 'hotel-booking'),
+                            'secondary',
+                            'hb_test_stripe',
+                            false
+                        ); ?>
+                        <p class="description">
+                            <?php
+                            printf(
+                                /* translators: 1: Test or Live, 2: secret key or restricted key */
+                                esc_html__('Authenticates against Stripe using your %1$s %2$s. Saves any pending changes first.', 'hotel-booking'),
+                                esc_html($resolver->get_mode_label()),
+                                esc_html(strtolower($resolver->get_key_type_label()))
+                            );
+                            ?>
+                        </p>
+                    </td>
                 </tr>
             </table>
         </div>
@@ -446,6 +532,107 @@ final class SettingsPage
                 </tr>
             </table>
         </div>
+        <?php
+    }
+
+    /**
+     * One mode's credentials.
+     *
+     * Secret and restricted keys are never rendered back into the page: the
+     * input ships empty and the stored value is shown only as a mask, so the
+     * full credential is not sitting in the admin HTML source. Leaving a field
+     * blank keeps whatever is already stored.
+     */
+    private function render_stripe_credentials(
+        string $mode,
+        string $title,
+        array $payments,
+        \HotelBooking\Services\StripeKeyResolver $resolver
+    ): void {
+        $is_active = $resolver->get_mode() === $mode;
+        $active_type = $resolver->get_key_type();
+
+        $pub_key = \HotelBooking\Services\StripeKeyResolver::publishable_option_key($mode);
+
+        $rows = [
+            \HotelBooking\Services\StripeKeyResolver::TYPE_SECRET => [
+                'label'       => $mode === 'live'
+                    ? __('Live Secret Key', 'hotel-booking')
+                    : __('Test Secret Key', 'hotel-booking'),
+                'placeholder' => $mode === 'live' ? 'sk_live_...' : 'sk_test_...',
+            ],
+            \HotelBooking\Services\StripeKeyResolver::TYPE_RESTRICTED => [
+                'label'       => $mode === 'live'
+                    ? __('Live Restricted Key', 'hotel-booking')
+                    : __('Test Restricted Key', 'hotel-booking'),
+                'placeholder' => $mode === 'live' ? 'rk_live_...' : 'rk_test_...',
+            ],
+        ];
+        ?>
+        <h3 style="margin:20px 0 6px;">
+            <?php echo esc_html($title); ?>
+            <?php if ($is_active) : ?>
+                <span class="hb-badge hb-badge--confirmed" style="vertical-align:middle;">
+                    <?php esc_html_e('Active', 'hotel-booking'); ?>
+                </span>
+            <?php endif; ?>
+        </h3>
+
+        <table class="form-table">
+            <tr>
+                <th>
+                    <label for="<?php echo esc_attr($pub_key); ?>">
+                        <?php echo $mode === 'live'
+                            ? esc_html__('Live Publishable Key', 'hotel-booking')
+                            : esc_html__('Test Publishable Key', 'hotel-booking'); ?>
+                    </label>
+                </th>
+                <td>
+                    <?php // Public by design -- it is sent to the browser for Stripe.js. ?>
+                    <input type="text" id="<?php echo esc_attr($pub_key); ?>"
+                           name="hb_payments[<?php echo esc_attr($pub_key); ?>]"
+                           value="<?php echo esc_attr($payments[$pub_key] ?? ''); ?>"
+                           placeholder="<?php echo esc_attr($mode === 'live' ? 'pk_live_...' : 'pk_test_...'); ?>"
+                           class="regular-text">
+                </td>
+            </tr>
+
+            <?php foreach ($rows as $type => $row) :
+                $option = \HotelBooking\Services\StripeKeyResolver::option_key($mode, $type);
+                $stored = $resolver->get_stored_key($mode, $type);
+                $in_use = $is_active && $active_type === $type;
+                ?>
+                <tr>
+                    <th>
+                        <label for="<?php echo esc_attr($option); ?>"><?php echo esc_html($row['label']); ?></label>
+                        <?php if ($in_use) : ?>
+                            <br><span class="description"><?php esc_html_e('In use', 'hotel-booking'); ?></span>
+                        <?php endif; ?>
+                    </th>
+                    <td>
+                        <input type="password" id="<?php echo esc_attr($option); ?>"
+                               name="hb_payments[<?php echo esc_attr($option); ?>]"
+                               value=""
+                               autocomplete="off"
+                               placeholder="<?php echo esc_attr($row['placeholder']); ?>"
+                               class="regular-text">
+                        <p class="description">
+                            <?php if ($stored !== '') : ?>
+                                <?php
+                                printf(
+                                    /* translators: %s: masked API key */
+                                    esc_html__('Saved: %s — leave blank to keep it.', 'hotel-booking'),
+                                    '<code>' . esc_html(\HotelBooking\Services\StripeKeyResolver::mask($stored)) . '</code>'
+                                );
+                                ?>
+                            <?php else : ?>
+                                <?php esc_html_e('Not set.', 'hotel-booking'); ?>
+                            <?php endif; ?>
+                        </p>
+                    </td>
+                </tr>
+            <?php endforeach; ?>
+        </table>
         <?php
     }
 
@@ -691,6 +878,19 @@ final class SettingsPage
             'settings-updated' => 'true',
         ];
 
+        if (!empty($this->stripe_key_errors)) {
+            set_transient('hb_stripe_key_errors', $this->stripe_key_errors, 60);
+            $args['hb-stripe-keys'] = 'invalid';
+        }
+
+        // Run after saving so the test uses the credentials just entered.
+        if (isset($_POST['hb_test_stripe'])) {
+            $result = (new \HotelBooking\Services\StripeGateway())->test_connection();
+            $args['hb-stripe'] = $result['success'] ? 'ok' : 'fail';
+            $args['tab'] = 'payments';
+            set_transient('hb_stripe_test_message', $result['message'], 60);
+        }
+
         // Sent after saving so the test uses the sender settings just entered.
         if (isset($_POST['hb_send_test_email'])) {
             $to = sanitize_email(wp_unslash($_POST['hb_test_email_to'] ?? ''));
@@ -764,19 +964,62 @@ final class SettingsPage
             'stripe_enabled'              => !empty($input['stripe_enabled']),
             'stripe_mode'                 => in_array($input['stripe_mode'] ?? '', ['test', 'live'], true)
                                                 ? $input['stripe_mode'] : 'test',
+            'stripe_key_type'             => in_array($input['stripe_key_type'] ?? '', ['secret_key', 'restricted_key'], true)
+                                                ? $input['stripe_key_type'] : 'secret_key',
             'stripe_test_publishable_key' => sanitize_text_field(wp_unslash($input['stripe_test_publishable_key'] ?? '')),
-            'stripe_test_secret_key'      => sanitize_text_field(wp_unslash($input['stripe_test_secret_key'] ?? '')),
             'stripe_live_publishable_key' => sanitize_text_field(wp_unslash($input['stripe_live_publishable_key'] ?? '')),
-            'stripe_live_secret_key'      => sanitize_text_field(wp_unslash($input['stripe_live_secret_key'] ?? '')),
             'offline_payment_enabled'     => !empty($input['offline_payment_enabled']),
             'offline_payment_title'       => sanitize_text_field(wp_unslash($input['offline_payment_title'] ?? '')),
             'offline_payment_description' => sanitize_textarea_field(wp_unslash($input['offline_payment_description'] ?? '')),
+            // API credentials are handled below: the form never echoes them back,
+            // so an empty field means "unchanged", not "clear it".
             'enable_partial_payment'      => !empty($input['enable_partial_payment']),
             'initial_payment_percentage'  => max(1, min(99, (int) ($input['initial_payment_percentage'] ?? 50))),
             'balance_due_days_before_check_in' => max(0, (int) ($input['balance_due_days_before_check_in'] ?? 30)),
         ];
 
-        update_option('hb_payments', array_merge(get_option('hb_payments', []), $sanitized));
+        $existing = get_option('hb_payments', []);
+        $resolver = new \HotelBooking\Services\StripeKeyResolver();
+
+        // Secret and restricted keys, for both modes. The form ships these
+        // fields empty (the stored value is only ever shown masked), so a blank
+        // submission must preserve what is already saved rather than wipe it.
+        $modes = [
+            \HotelBooking\Services\StripeKeyResolver::MODE_TEST,
+            \HotelBooking\Services\StripeKeyResolver::MODE_LIVE,
+        ];
+        $types = [
+            \HotelBooking\Services\StripeKeyResolver::TYPE_SECRET,
+            \HotelBooking\Services\StripeKeyResolver::TYPE_RESTRICTED,
+        ];
+
+        foreach ($modes as $mode) {
+            foreach ($types as $type) {
+                $option = \HotelBooking\Services\StripeKeyResolver::option_key($mode, $type);
+                $submitted = trim(sanitize_text_field(wp_unslash($input[$option] ?? '')));
+
+                if ($submitted === '') {
+                    continue; // unchanged
+                }
+
+                // Reject a key pasted into the wrong box rather than storing a
+                // credential that can never authenticate.
+                if (!$resolver->validate_format($submitted, $mode, $type)) {
+                    $expected = implode(', ', \HotelBooking\Services\StripeKeyResolver::expected_prefixes($mode, $type));
+                    $this->stripe_key_errors[] = sprintf(
+                        /* translators: 1: field label, 2: expected prefix */
+                        __('%1$s was not saved: it must begin with %2$s.', 'hotel-booking'),
+                        $option,
+                        $expected
+                    );
+                    continue;
+                }
+
+                $sanitized[$option] = $submitted;
+            }
+        }
+
+        update_option('hb_payments', array_merge($existing, $sanitized));
     }
 
     private function save_emails(): void

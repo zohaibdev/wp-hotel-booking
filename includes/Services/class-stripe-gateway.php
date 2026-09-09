@@ -14,20 +14,22 @@ final class StripeGateway
 {
     private const API_BASE = 'https://api.stripe.com/v1';
 
+    /** The credential the API is called with -- a secret OR a restricted key. */
     private string $secret_key;
     private string $mode;
+
+    private StripeKeyResolver $keys;
 
     /** Human-readable reason the last call failed, for surfacing upstream. */
     private string $last_error = '';
 
-    public function __construct()
+    public function __construct(?StripeKeyResolver $keys = null)
     {
-        $this->mode = hb_get_option('hb_payments', 'stripe_mode', 'test') === 'live' ? 'live' : 'test';
-        $this->secret_key = trim((string) hb_get_option(
-            'hb_payments',
-            $this->mode === 'live' ? 'stripe_live_secret_key' : 'stripe_test_secret_key',
-            ''
-        ));
+        // One resolver decides mode + key type; nothing here reads the
+        // credential options directly.
+        $this->keys = $keys ?? new StripeKeyResolver();
+        $this->mode = $this->keys->get_mode();
+        $this->secret_key = $this->keys->get_api_key();
     }
 
     public function get_last_error(): string
@@ -40,13 +42,20 @@ final class StripeGateway
         return !empty(hb_get_option('hb_payments', 'stripe_enabled', false));
     }
 
+    /** The only Stripe credential that may reach the browser. */
     public function get_publishable_key(): string
     {
-        return trim((string) hb_get_option(
-            'hb_payments',
-            $this->mode === 'live' ? 'stripe_live_publishable_key' : 'stripe_test_publishable_key',
-            ''
-        ));
+        return $this->keys->get_publishable_key();
+    }
+
+    public function get_key_type(): string
+    {
+        return $this->keys->get_key_type();
+    }
+
+    public function get_mode(): string
+    {
+        return $this->mode;
     }
 
     /**
@@ -56,9 +65,10 @@ final class StripeGateway
      */
     public function is_configured(): bool
     {
-        return $this->is_enabled()
-            && $this->secret_key !== ''
-            && $this->get_publishable_key() !== '';
+        // Delegates to the resolver so a key that is present but wrong for the
+        // active mode or type still counts as misconfigured. Treating it as
+        // ready would advertise card payment to guests and then fail the charge.
+        return $this->is_enabled() && empty($this->keys->get_config_errors());
     }
 
     /**
@@ -71,41 +81,84 @@ final class StripeGateway
             return [];
         }
 
-        $errors = [];
-        $label = $this->mode === 'live' ? __('Live', 'hotel-booking') : __('Test', 'hotel-booking');
-
-        if ($this->get_publishable_key() === '') {
-            /* translators: %s: Stripe mode (Test or Live) */
-            $errors[] = sprintf(__('Stripe %s publishable key is missing.', 'hotel-booking'), $label);
-        }
-
-        if ($this->secret_key === '') {
-            /* translators: %s: Stripe mode (Test or Live) */
-            $errors[] = sprintf(__('Stripe %s secret key is missing.', 'hotel-booking'), $label);
-        }
-
-        if ($this->secret_key !== '' && !$this->key_matches_mode($this->secret_key)) {
-            $errors[] = $this->mode === 'live'
-                ? __('Live mode is selected but the secret key is a test key (sk_test_...).', 'hotel-booking')
-                : __('Test mode is selected but the secret key is a live key (sk_live_...).', 'hotel-booking');
-        }
-
-        return $errors;
+        return $this->keys->get_config_errors();
     }
 
-    private function key_matches_mode(string $key): bool
+    /**
+     * Authenticates against Stripe with the currently selected credential.
+     *
+     * Distinguishes "the key is wrong" (401) from "the key is valid but lacks
+     * this permission" (403) -- the latter is the common case for a restricted
+     * key scoped too narrowly, and is worth telling the admin precisely.
+     *
+     * The credential itself never appears in the returned message.
+     *
+     * @return array{success:bool, message:string}
+     */
+    public function test_connection(): array
     {
-        // Restricted keys (rk_) carry the same prefixes; anything unrecognised is
-        // left alone rather than guessed at.
-        if (str_starts_with($key, 'sk_test_') || str_starts_with($key, 'rk_test_')) {
-            return $this->mode === 'test';
+        if ($this->secret_key === '') {
+            return [
+                'success' => false,
+                'message' => __('No API key is configured for the selected mode and key type.', 'hotel-booking'),
+            ];
         }
 
-        if (str_starts_with($key, 'sk_live_') || str_starts_with($key, 'rk_live_')) {
-            return $this->mode === 'live';
+        $response = wp_remote_get(self::API_BASE . '/payment_intents?limit=1', [
+            'headers' => ['Authorization' => 'Bearer ' . $this->secret_key],
+            'timeout' => 20,
+        ]);
+
+        if (is_wp_error($response)) {
+            Logger::warning('Stripe connection test could not reach the API', [
+                'error' => $response->get_error_message(),
+            ]);
+            return [
+                'success' => false,
+                'message' => __('Could not reach Stripe. Check your server\'s outbound connection.', 'hotel-booking'),
+            ];
         }
 
-        return true;
+        $status = wp_remote_retrieve_response_code($response);
+        $body   = json_decode(wp_remote_retrieve_body($response), true);
+        $detail = is_array($body) ? ($body['error']['message'] ?? '') : '';
+
+        if ($status === 200) {
+            return [
+                'success' => true,
+                'message' => sprintf(
+                    /* translators: 1: Test or Live, 2: secret key or restricted key */
+                    __('Connected to Stripe in %1$s mode using your %2$s.', 'hotel-booking'),
+                    $this->keys->get_mode_label(),
+                    strtolower($this->keys->get_key_type_label())
+                ),
+            ];
+        }
+
+        if ($status === 401) {
+            return [
+                'success' => false,
+                'message' => __('Stripe rejected the key. Check that it is correct and matches the selected mode.', 'hotel-booking'),
+            ];
+        }
+
+        if ($status === 403) {
+            return [
+                'success' => false,
+                'message' => __('The key is valid but lacks permission to read PaymentIntents. Grant your restricted key read and write access to PaymentIntents.', 'hotel-booking'),
+            ];
+        }
+
+        Logger::warning('Stripe connection test returned an unexpected status', [
+            'status' => $status,
+            'error'  => $detail,
+        ]);
+
+        return [
+            'success' => false,
+            /* translators: %d: HTTP status code */
+            'message' => sprintf(__('Stripe returned an unexpected response (HTTP %d).', 'hotel-booking'), $status),
+        ];
     }
 
     /**
